@@ -1,651 +1,383 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <title>Chord Table Pro - Editor</title>
     <style>
         :root {
-            --c-bg: #F2F2F2;
-            --c-white: #FFFFFF;
-            --c-black: #000000;
-            --c-dark: #3F3F3F;
-            --c-blue-bg: #DDEEFF;
-            --c-blue-txt: #000077;
-            --c-red-bg: #FFDDDD;
-            --c-red-txt: #900000;
-            --c-green-bg: #CCFFCC;
-            --c-green-txt: #005500;
-            --c-orange-bg: #FFCCAA;
-            --c-orange-txt: #AA3300;
-            --c-purple-bg: #FFCCFF;
-            --c-purple-txt: #660066;
-            --c-yellow-bg: #FFFAAA;
-            --c-yellow-txt: #777700;
+            --c-bg: #F2F2F2; --c-white: #FFFFFF; --c-black: #000000; --c-dark: #3F3F3F;
+            --c-blue-bg: #DDEEFF;  --c-blue-txt: #000077;
+            --c-red-bg: #FFDDDD;   --c-red-txt: #900000;
+            --c-green-bg: #CCFFCC; --c-green-txt: #005500;
+            --c-orange-bg: #FFCCAA;--c-orange-txt: #AA3300;
+            --c-purple-bg: #FFCCFF;--c-purple-txt: #660066;
+            --c-yellow-bg: #FFFAAA;--c-yellow-txt: #777700;
             --c-accent: #FFCB03;
         }
 
-        body {
-            font-family: "Helvetica Neue", Arial, sans-serif;
-            margin: 0;
-            background-color: var(--c-bg);
-            color: var(--c-dark);
-            font-size: 12px;
-        }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: var(--c-bg); color: var(--c-dark); font-size: 12px; }
+        .header-fixed { position: fixed; top: 0; left: 0; width: 100%; background: var(--c-white); z-index: 1000; border-bottom: 2px solid var(--c-dark); }
+        .header-inner { padding: 5px 10px; }
+        .header-fixed.collapsed .header-content { display: none; }
+        .toggle-btn { position: absolute; right: 10px; bottom: 5px; background: var(--c-white); border: 1px solid var(--c-dark); cursor: pointer; padding: 2px 6px; font-size: 12px; }
+        .header-fixed.collapsed .toggle-btn { bottom: -22px; border-top: none; }
 
-        .header-fixed {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: var(--c-white);
-            z-index: 1000;
-            border-bottom: 2px solid var(--c-dark);
-        }
+        .container { max-width: 1200px; margin: auto; padding: 0 10px; }
+        .meta-info { font-size: 12px; font-weight: bold; margin-bottom: 4px; }
+        
+        .search-bar { position: relative; display: flex; gap: 4px; margin-bottom: 4px; align-items: center; }
+        .search-bar input { border: 1px solid var(--c-dark); padding: 2px 4px; font-size: 12px; width: 220px; }
+        #search-results { position: absolute; top: 24px; left: 55px; background: white; border: 1px solid var(--c-dark); width: 300px; z-index: 2000; display: none; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 
-        .header-inner {
-            padding: 5px 10px;
-        }
+        .title-input { font-size: 36px; font-weight: bold; width: 100%; border: none; outline: none; color: var(--c-black); background: transparent; }
+        .artist-input { font-size: 24px; width: 100%; border: none; outline: none; color: var(--c-dark); background: transparent; }
 
-        .header-fixed.collapsed .header-content {
-            display: none;
-        }
+        .settings-grid { display: flex; gap: 10px; align-items: center; margin-bottom: 4px; }
+        .setting-item { display: flex; align-items: center; gap: 2px; font-weight: bold; }
+        .setting-item input, .setting-item select { border: 1px solid var(--c-dark); padding: 2px; font-size: 12px; }
+        
+        .btn { border: 1px solid var(--c-dark); padding: 4px 8px; cursor: pointer; font-weight: bold; font-size: 12px; background: var(--c-white); }
+        .btn-add { background: var(--c-green-bg); color: var(--c-green-txt); font-size: 16px; }
+        .btn-publish { background: var(--c-purple-bg); color: var(--c-purple-txt); }
+        .btn-play { background: var(--c-accent); color: var(--c-black); }
+        .btn-mode { background: var(--c-blue-bg); color: var(--c-blue-txt); margin-left: auto; }
 
-        .toggle-btn {
-            position: absolute;
-            right: 10px;
-            bottom: 5px;
-            background: var(--c-white);
-            border: 1px solid var(--c-dark);
-            cursor: pointer;
-            padding: 2px 6px;
-            font-size: 12px;
-        }
+        body.mode-view .edit-only { display: none !important; }
+        .sheet-area { display: flex; flex-direction: column; gap: 4px; }
+        .sheet-row { display: flex; gap: 4px; background: var(--c-white); padding: 4px; border: 1px solid var(--c-dark); position: relative; }
+        body.mode-view .sheet-row { border: none; border-bottom: 1px solid var(--c-dark); background: transparent; }
+        
+        .row-controls { display: flex; flex-direction: column; gap: 4px; border-right: 1px dashed var(--c-dark); padding-right: 4px; align-items: center; }
+        .row-beats-select { font-size: 10px; width: 35px; border: 1px solid var(--c-dark); }
+        .btn-delete { background: var(--c-red-bg); color: var(--c-red-txt); border: 1px solid var(--c-dark); cursor: pointer; font-size: 10px; padding: 2px 4px; }
 
-        .header-fixed.collapsed .toggle-btn {
-            bottom: -22px;
-            border-top: none;
-        }
+        .chord-grid { display: grid; flex-grow: 1; gap: 2px; }
+        .grid-1 { grid-template-columns: repeat(1, 1fr); } .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); } .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        .grid-5 { grid-template-columns: repeat(5, 1fr); } .grid-6 { grid-template-columns: repeat(6, 1fr); }
+        .grid-7 { grid-template-columns: repeat(7, 1fr); } .grid-8 { grid-template-columns: repeat(8, 1fr); }
+        .grid-9 { grid-template-columns: repeat(9, 1fr); } .grid-10 { grid-template-columns: repeat(10, 1fr); }
+        .grid-11 { grid-template-columns: repeat(11, 1fr); } .grid-12 { grid-template-columns: repeat(12, 1fr); }
+        .grid-13 { grid-template-columns: repeat(13, 1fr); } .grid-14 { grid-template-columns: repeat(14, 1fr); }
+        .grid-15 { grid-template-columns: repeat(15, 1fr); } .grid-16 { grid-template-columns: repeat(16, 1fr); }
+        
+        .cell { border: 1px solid var(--c-dark); padding: 2px; background: #F2F2F2; display: flex; flex-direction: column; }
+        .cell:focus-within { background: #FFFAAA; border: 2px solid var(--c-orange-txt); padding: 1px; }
+        body.mode-view .cell { border: none; background: transparent; }
 
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 0 10px;
-        }
-
-        .meta-info {
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-        .search-bar {
-            position: relative;
-            display: flex;
-            gap: 4px;
-            margin-bottom: 4px;
-            align-items: center;
-        }
-
-        .search-bar input {
-            border: 1px solid var(--c-dark);
-            padding: 2px 4px;
-            font-size: 12px;
-            width: 220px;
-        }
-
-        #search-results {
-            position: absolute;
-            top: 24px;
-            left: 55px;
-            background: white;
-            border: 1px solid var(--c-dark);
-            width: 300px;
-            z-index: 2000;
-            display: none;
-            max-height: 250px;
-            overflow-y: auto;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .title-input {
-            font-size: 36px;
-            font-weight: bold;
-            width: 100%;
-            border: none;
-            outline: none;
-            color: var(--black);
-            background: transparent;
-        }
-
-        .artist-input {
-            font-size: 24px;
-            width: 100%;
-            border: none;
-            outline: none;
-            color: var(--c-dark);
-            background: transparent;
-        }
-
-        .settings-grid {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 4px;
-        }
-
-        .setting-item {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            font-weight: bold;
-        }
-
-        .setting-item input,
-        .setting-item select {
-            border: 1px solid var(--c-dark);
-            padding: 2px;
-            font-size: 12px;
-        }
-
-        .btn {
-            border: 1px solid var(--c-dark);
-            padding: 4px 8px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 12px;
-            background: var(--c-white);
-        }
-
-        .btn-add {
-            background: var(--c-green-bg);
-            color: var(--c-green-txt);
-            font-size: 16px;
-        }
-
-        .btn-publish {
-            background: var(--c-purple-bg);
-            color: var(--c-purple-txt);
-        }
-
-        .btn-play {
-            background: var(--c-accent);
-            color: var(--c-black);
-        }
-
-        .btn-mode {
-            background: var(--c-blue-bg);
-            color: var(--c-blue-txt);
-            margin-left: auto;
-        }
-
-        body.mode-view .edit-only {
-            display: none !important;
-        }
-
-        .sheet-area {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .sheet-row {
-            display: flex;
-            gap: 4px;
-            background: var(--c-white);
-            padding: 4px;
-            border: 1px solid var(--c-dark);
-            position: relative;
-        }
-
-        body.mode-view .sheet-row {
-            border: none;
-            border-bottom: 1px solid var(--c-dark);
-            background: transparent;
-        }
-
-        .row-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            border-right: 1px dashed var(--c-dark);
-            padding-right: 4px;
-            align-items: center;
-        }
-
-        .row-beats-select {
-            font-size: 10px;
-            width: 35px;
-            border: 1px solid var(--c-dark);
-        }
-
-        .btn-delete {
-            background: var(--c-red-bg);
-            color: var(--c-red-txt);
-            border: 1px solid var(--c-dark);
-            cursor: pointer;
-            font-size: 10px;
-            padding: 2px 4px;
-        }
-
-        .chord-grid {
-            display: grid;
-            flex-grow: 1;
-            gap: 2px;
-        }
-
-        .grid-1 {
-            grid-template-columns: repeat(1, 1fr);
-        }
-
-        .grid-2 {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .grid-3 {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
-        .grid-4 {
-            grid-template-columns: repeat(4, 1fr);
-        }
-
-        .grid-5 {
-            grid-template-columns: repeat(5, 1fr);
-        }
-
-        .grid-6 {
-            grid-template-columns: repeat(6, 1fr);
-        }
-
-        .grid-7 {
-            grid-template-columns: repeat(7, 1fr);
-        }
-
-        .grid-8 {
-            grid-template-columns: repeat(8, 1fr);
-        }
-
-        .grid-9 {
-            grid-template-columns: repeat(9, 1fr);
-        }
-
-        .grid-10 {
-            grid-template-columns: repeat(10, 1fr);
-        }
-
-        .grid-11 {
-            grid-template-columns: repeat(11, 1fr);
-        }
-
-        .grid-12 {
-            grid-template-columns: repeat(12, 1fr);
-        }
-
-        .grid-13 {
-            grid-template-columns: repeat(13, 1fr);
-        }
-
-        .grid-14 {
-            grid-template-columns: repeat(14, 1fr);
-        }
-
-        .grid-15 {
-            grid-template-columns: repeat(15, 1fr);
-        }
-
-        .grid-16 {
-            grid-template-columns: repeat(16, 1fr);
-        }
-
-        .cell {
-            border: 1px solid var(--c-dark);
-            padding: 2px;
-            background: #F2F2F2;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .cell:focus-within {
-            background: #FFFAAA;
-            border: 2px solid var(--c-orange-txt);
-            padding: 1px;
-        }
-
-        body.mode-view .cell {
-            border: none;
-            background: transparent;
-        }
-
-        .chord-input {
-            width: 100%;
-            border: none;
-            background: transparent;
-            font-size: 32px;
-            font-weight: bold;
-            color: var(--c-orange-txt);
-            text-align: center;
-            outline: none;
-        }
-
-        .lyric-input {
-            width: 100%;
-            border: none;
-            background: transparent;
-            font-size: 16px;
-            color: var(--c-black);
-            border-top: 1px solid var(--c-dark);
-            outline: none;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 20px;
-            font-size: 12px;
-            color: var(--c-dark);
-        }
+        .chord-input { width: 100%; border: none; background: transparent; font-size: 32px; font-weight: bold; color: var(--c-orange-txt); text-align: center; outline: none; }
+        .lyric-input { width: 100%; border: none; background: transparent; font-size: 16px; color: var(--c-black); border-top: 1px solid var(--c-dark); outline: none; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: var(--c-dark); }
     </style>
 </head>
-
 <body class="mode-edit">
 
-    <div class="header-fixed" id="main-header">
-        <button class="toggle-btn" onclick="window.toggleHeader()">▲</button>
-        <div class="header-inner header-content">
-            <div class="container">
-                <div id="meta-line" class="meta-info">ID: --- | Ver: --- | Updated: ---</div>
-                <div class="search-bar">
-                    SEARCH <input type="text" id="search-input" placeholder="Title, Artist, or ID..."
-                        oninput="window.smartSearch()">
-                    <div id="search-results"></div>
+<div class="header-fixed" id="main-header">
+    <button class="toggle-btn" onclick="window.toggleHeader()">▲</button>
+    <div class="header-inner header-content">
+        <div class="container">
+            <div id="meta-line" class="meta-info">ID: --- | Ver: --- | Updated: ---</div>
+            <div class="search-bar">
+                SEARCH <input type="text" id="search-input" placeholder="Title, Artist, or ID..." oninput="window.smartSearch()">
+                <div id="search-results"></div>
+            </div>
+            <input type="text" id="title" class="title-input" placeholder="SONG TITLE">
+            <input type="text" id="artist" class="artist-input" placeholder="ARTIST NAME">
+            <div class="settings-grid">
+                <div class="setting-item">KEY <input type="text" id="current-key" value="C" style="width:30px;"></div>
+                <div class="setting-item">CAPO <input type="number" id="capo" value="0" style="width:35px;"></div>
+                <div class="edit-only">
+                    <button class="btn" onclick="window.transposeByKeyBtn(-1)">KEY -1</button>
+                    <button class="btn" onclick="window.transposeByKeyBtn(1)">KEY +1</button>
                 </div>
-                <input type="text" id="title" class="title-input" placeholder="SONG TITLE">
-                <input type="text" id="artist" class="artist-input" placeholder="ARTIST NAME">
-                <div class="settings-grid">
-                    <div class="setting-item">KEY <input type="text" id="current-key" value="C" style="width:30px;">
-                    </div>
-                    <div class="setting-item">CAPO <input type="number" id="capo" value="0" style="width:35px;"></div>
-                    <div class="edit-only">
-                        <button class="btn" onclick="window.transposeByKeyBtn(-1)">KEY -1</button>
-                        <button class="btn" onclick="window.transposeByKeyBtn(1)">KEY +1</button>
-                    </div>
-                    <div class="setting-item">BPM <input type="number" id="bpm" value="120" style="width:45px;"></div>
-                    <div class="setting-item edit-only">DEFAULT BEATS
-                        <select id="default-beats" style="width:45px;">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4" selected>4</option>
-                            <option value="5">5</option>
-                            <option value="6">6</option>
-                            <option value="7">7</option>
-                            <option value="8">8</option>
-                            <option value="9">9</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
-                            <option value="13">13</option>
-                            <option value="14">14</option>
-                            <option value="15">15</option>
-                            <option value="16">16</option>
-                        </select>
-                    </div>
+                <div class="setting-item">BPM <input type="number" id="bpm" value="120" style="width:45px;"></div>
+                <div class="setting-item edit-only">BEAT/CELL <input type="number" id="beats-per-cell" value="1" step="0.25" style="width:40px;"></div>
+                <div class="setting-item edit-only">DEFAULT BEATS 
+                    <select id="default-beats" style="width:45px;">
+                        <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                        <option value="4" selected>4</option><option value="5">5</option><option value="6">6</option>
+                        <option value="7">7</option><option value="8">8</option><option value="9">9</option>
+                        <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+                        <option value="13">13</option><option value="14">14</option><option value="15">15</option>
+                        <option value="16">16</option>
+                    </select>
                 </div>
-                <div class="controls">
-                    <button class="btn btn-publish edit-only" onclick="window.publishToFirebase()">PUBLISH</button>
-                    <button class="btn btn-play" id="playBtn" onclick="window.toggleScroll()">PLAY</button>
-                    <button class="btn btn-mode" id="modeBtn" onclick="window.toggleMode()">VIEW MODE</button>
-                </div>
+            </div>
+            <div class="controls">
+                <button class="btn btn-publish edit-only" onclick="window.publishToFirebase()">PUBLISH</button>
+                <button class="btn btn-play" id="playBtn" onclick="window.toggleScroll()">PLAY</button>
+                <button class="btn btn-mode" id="modeBtn" onclick="window.toggleMode()">VIEW MODE</button>
             </div>
         </div>
     </div>
+</div>
 
-    <div class="container" id="main-container">
-        <div id="sheet" class="sheet-area"></div>
-        <div class="edit-only" style="margin-top:10px;">
-            <button class="btn btn-add" style="width:100%;" onclick="window.addRow();">+ ADD NEW LINE</button>
-        </div>
+<div class="container" id="main-container">
+    <div id="sheet" class="sheet-area"></div>
+    <div class="edit-only" style="margin-top:10px;">
+        <button class="btn btn-add" style="width:100%;" onclick="window.addRow();">+ ADD NEW LINE</button>
     </div>
+</div>
 
-    <div class="footer">©SMA Engineering Department</div>
+<div class="footer">©SMA Engineering Department</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, getDocs, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-        const firebaseConfig = {
-            apiKey: "AIzaSyCiAyc-L0wxGBQ5Sd8JoKdY2OBPTAwsD7s",
-            authDomain: "chord-table.firebaseapp.com",
-            projectId: "chord-table",
-            storageBucket: "chord-table.firebasestorage.app",
-            messagingSenderId: "728251607996",
-            appId: "1:728251607996:web:dc29c35d702f82410c19b9",
-            measurementId: "G-3FHPM24B7S"
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "chord-table.firebaseapp.com",
+        projectId: "chord-table",
+        storageBucket: "chord-table.firebasestorage.app",
+        messagingSenderId: "728251607996",
+        appId: "1:728251607996:web:dc29c35d702f82410c19b9"
+    };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        let currentSongId = null, currentPassword = null, currentVersion = 0, lastCapo = 0;
-        const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-        const normalize = (n) => n.toUpperCase().replace('DB', 'C#').replace('EB', 'D#').replace('GB', 'F#').replace('AB', 'G#').replace('BB', 'A#');
+    let currentSongId = null, currentPassword = null, currentVersion = 0, lastCapo = 0;
+    const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const normalize = (n) => n.toUpperCase().replace('DB','C#').replace('EB','D#').replace('GB','F#').replace('AB','G#').replace('BB','A#');
 
-        const header = document.getElementById('main-header');
-        const resizeObserver = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                document.getElementById('main-container').style.marginTop = (entry.contentRect.height + 15) + 'px';
+    const header = document.getElementById('main-header');
+    const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+            document.getElementById('main-container').style.marginTop = (entry.contentRect.height + 15) + 'px';
+        }
+    });
+    resizeObserver.observe(header);
+
+    window.toggleHeader = function() { header.classList.toggle('collapsed'); };
+
+    window.smartSearch = async function() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        const resDiv = document.getElementById('search-results');
+        if (query.length < 1) { resDiv.style.display = "none"; return; }
+        const snap = await getDocs(collection(db, "songs"));
+        let html = "";
+        snap.forEach(s => {
+            const d = s.data();
+            if (s.id.includes(query) || d.title.toLowerCase().includes(query) || d.artist.toLowerCase().includes(query)) {
+                html += `<div style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;" onclick="window.loadSongById('${s.id}')"><b>[${s.id}]</b> ${d.title} / ${d.artist}</div>`;
             }
         });
-        resizeObserver.observe(header);
+        resDiv.innerHTML = html || "<div style='padding:8px;'>No results</div>";
+        resDiv.style.display = "block";
+    };
 
-        window.toggleHeader = function () { header.classList.toggle('collapsed'); };
-
-        window.smartSearch = async function () {
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const resDiv = document.getElementById('search-results');
-            if (query.length < 1) { resDiv.style.display = "none"; return; }
-            const snap = await getDocs(collection(db, "songs"));
-            let html = "";
-            snap.forEach(s => {
-                const d = s.data();
-                if (s.id.includes(query) || d.title.toLowerCase().includes(query) || d.artist.toLowerCase().includes(query)) {
-                    html += `<div style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;" onclick="window.loadSongById('${s.id}')"><b>[${s.id}]</b> ${d.title} / ${d.artist}</div>`;
-                }
-            });
-            resDiv.innerHTML = html || "<div style='padding:8px;'>No results</div>";
-            resDiv.style.display = "block";
-        };
-
-        window.loadSongById = async function (id) {
-            document.getElementById('search-results').style.display = "none";
-            const snap = await getDoc(doc(db, "songs", id));
-            if (snap.exists()) {
-                const d = snap.data();
-                document.getElementById('sheet').innerHTML = "";
-                document.getElementById('title').value = d.title;
-                document.getElementById('artist').value = d.artist;
-                document.getElementById('current-key').value = d.key;
-                document.getElementById('capo').value = d.capo;
-                document.getElementById('bpm').value = d.bpm || 120;
-                currentSongId = id; currentPassword = d.password; currentVersion = d.version;
-                d.rows.forEach(r => window.addRow(r.b, r.cels));
-                updateUI(d.updatedAt);
-                document.body.className = "mode-view";
-                document.getElementById('modeBtn').innerText = "EDIT MODE";
-            }
-        };
-
-        window.publishToFirebase = async function () {
-            if (!currentSongId) {
-                const p = prompt("Set edit password:");
-                if (!p) return;
-                const counterRef = doc(db, "counters", "song_id");
-                const reusableRef = doc(db, "counters", "reusable_ids");
-                await runTransaction(db, async (t) => {
-                    const rSnap = await t.get(reusableRef);
-                    let newId;
-                    if (rSnap.exists() && rSnap.data().ids.length > 0) {
-                        let ids = rSnap.data().ids.sort((a, b) => a - b);
-                        newId = ids.shift();
-                        t.update(reusableRef, { ids: ids });
-                    } else {
-                        const cSnap = await t.get(counterRef);
-                        newId = cSnap.exists() ? cSnap.data().current + 1 : 1;
-                        t.set(counterRef, { current: newId });
-                    }
-                    t.set(doc(db, "songs", newId.toString()), captureData(p, 1));
-                    currentSongId = newId.toString();
-                });
-                alert("Published! ID: " + currentSongId);
-            } else {
-                const inputPass = prompt("Enter password:");
-                if (inputPass === null) return;
-                if (String(inputPass).trim() !== String(currentPassword).trim()) return alert("Wrong password.");
-                currentVersion++;
-                await updateDoc(doc(db, "songs", currentSongId), captureData(currentPassword, currentVersion));
-                alert("Updated!");
-            }
-            updateUI(new Date().toLocaleString());
-        };
-
-        function captureData(p, v) {
-            const rows = [];
-            document.querySelectorAll('.sheet-row').forEach(r => {
-                const bValue = parseInt(r.querySelector('.row-beats-select').value);
-                const cels = Array.from(r.querySelectorAll('.cell')).map(c => ({
-                    c: c.querySelector('.chord-input').value, l: c.querySelector('.lyric-input').value
-                }));
-                rows.push({ b: bValue, cels });
-            });
-            return {
-                title: document.getElementById('title').value,
-                artist: document.getElementById('artist').value,
-                key: document.getElementById('current-key').value,
-                capo: document.getElementById('capo').value,
-                bpm: document.getElementById('bpm').value,
-                password: p, version: v, updatedAt: new Date().toLocaleString(), rows
-            };
+    window.loadSongById = async function(id) {
+        document.getElementById('search-results').style.display = "none";
+        const snap = await getDoc(doc(db, "songs", id));
+        if (snap.exists()) {
+            const d = snap.data();
+            document.getElementById('sheet').innerHTML = "";
+            document.getElementById('title').value = d.title;
+            document.getElementById('artist').value = d.artist;
+            document.getElementById('current-key').value = d.key;
+            document.getElementById('capo').value = d.capo;
+            document.getElementById('bpm').value = d.bpm || 120;
+            document.getElementById('beats-per-cell').value = d.beatsPerCell || 1;
+            currentSongId = id; currentPassword = d.password; currentVersion = d.version;
+            d.rows.forEach(r => window.addRow(r.b, r.cels));
+            updateUI(d.updatedAt);
+            document.body.className = "mode-view";
+            document.getElementById('modeBtn').innerText = "EDIT MODE";
         }
+    };
 
-        window.toggleMode = function () {
-            if (!currentSongId) return alert("Please PUBLISH first.");
-            if (document.body.classList.contains('mode-edit')) {
-                document.body.className = "mode-view"; document.getElementById('modeBtn').innerText = "EDIT MODE";
-            } else {
-                const inputPass = prompt("Enter password:");
-                if (inputPass === null) return;
-                if (String(inputPass).trim() === String(currentPassword).trim()) {
-                    document.body.className = "mode-edit"; document.getElementById('modeBtn').innerText = "VIEW MODE";
+    window.publishToFirebase = async function() {
+        if (!currentSongId) {
+            const p = prompt("Set edit password:");
+            if (!p) return;
+            const counterRef = doc(db, "counters", "song_id");
+            const reusableRef = doc(db, "counters", "reusable_ids");
+            await runTransaction(db, async (t) => {
+                const rSnap = await t.get(reusableRef);
+                let newId;
+                if (rSnap.exists() && rSnap.data().ids.length > 0) {
+                    let ids = rSnap.data().ids.sort((a,b)=>a-b);
+                    newId = ids.shift();
+                    t.update(reusableRef, { ids: ids });
                 } else {
-                    alert("Wrong password.");
+                    const cSnap = await t.get(counterRef);
+                    newId = cSnap.exists() ? cSnap.data().current + 1 : 1;
+                    t.set(counterRef, { current: newId });
                 }
-            }
-        };
-
-        function getBeatsOptions(selected) {
-            let opts = "";
-            for (let i = 1; i <= 16; i++) {
-                opts += `<option value="${i}" ${i == selected ? 'selected' : ''}>${i}</option>`;
-            }
-            return opts;
+                t.set(doc(db, "songs", newId.toString()), captureData(p, 1));
+                currentSongId = newId.toString();
+            });
+            alert("Published! ID: " + currentSongId);
+        } else {
+            const inputPass = prompt("Enter password:");
+            if (inputPass === null) return;
+            if (String(inputPass).trim() !== String(currentPassword).trim()) return alert("Wrong password.");
+            currentVersion++;
+            await updateDoc(doc(db, "songs", currentSongId), captureData(currentPassword, currentVersion));
+            alert("Updated!");
         }
+        updateUI(new Date().toLocaleString());
+    };
 
-        window.addRow = function (b = null, data = null) {
-            const beats = b || document.getElementById('default-beats').value;
-            const row = document.createElement('div');
-            row.className = 'sheet-row';
-            const renderCells = (num, existingData) => {
-                let html = "";
-                for (let i = 0; i < num; i++) {
-                    const cVal = (existingData && existingData[i]) ? existingData[i].c : '';
-                    const lVal = (existingData && existingData[i]) ? existingData[i].l : '';
-                    html += `<div class="cell"><input class="chord-input" value="${cVal}" placeholder="-" onfocus="this.select()"><input class="lyric-input" value="${lVal}" placeholder="lyric" onfocus="this.select()"></div>`;
-                }
-                return html;
-            };
-            row.innerHTML = `<div class="row-controls edit-only"><select class="row-beats-select" onchange="window.updateRowBeats(this)">${getBeatsOptions(beats)}</select><button class="btn-delete" onclick="this.parentElement.parentElement.remove()">DEL</button></div><div class="chord-grid grid-${beats}">${renderCells(beats, data)}</div>`;
-            document.getElementById('sheet').appendChild(row);
-        };
-
-        window.updateRowBeats = function (selectEl) {
-            const newBeats = selectEl.value;
-            const gridDiv = selectEl.parentElement.nextElementSibling;
-            const currentCells = Array.from(gridDiv.querySelectorAll('.cell')).map(c => ({
+    function captureData(p, v) {
+        const rows = [];
+        document.querySelectorAll('.sheet-row').forEach(r => {
+            const bValue = parseInt(r.querySelector('.row-beats-select').value);
+            const cels = Array.from(r.querySelectorAll('.cell')).map(c => ({
                 c: c.querySelector('.chord-input').value, l: c.querySelector('.lyric-input').value
             }));
-            gridDiv.className = `chord-grid grid-${newBeats}`;
-            let newHtml = "";
-            for (let i = 0; i < newBeats; i++) {
-                const cVal = currentCells[i] ? currentCells[i].c : '';
-                const lVal = currentCells[i] ? currentCells[i].l : '';
-                newHtml += `<div class="cell"><input class="chord-input" value="${cVal}" placeholder="-" onfocus="this.select()"><input class="lyric-input" value="${lVal}" placeholder="lyric" onfocus="this.select()"></div>`;
-            }
-            gridDiv.innerHTML = newHtml;
-        };
-
-        document.getElementById('capo').addEventListener('input', (e) => {
-            const newCapo = parseInt(e.target.value) || 0;
-            window.transposeAllChords(lastCapo - newCapo);
-            lastCapo = newCapo;
+            rows.push({ b: bValue, cels });
         });
-
-        window.transposeByKeyBtn = function (amt) {
-            const el = document.getElementById('current-key');
-            let idx = notes.indexOf(normalize(el.value));
-            let newKey = notes[(idx + amt + 12) % 12];
-            el.value = newKey;
-            window.transposeAllChords(amt);
+        return { 
+            title: document.getElementById('title').value, 
+            artist: document.getElementById('artist').value, 
+            key: document.getElementById('current-key').value, 
+            capo: document.getElementById('capo').value, 
+            bpm: document.getElementById('bpm').value,
+            beatsPerCell: document.getElementById('beats-per-cell').value,
+            password: p, version: v, updatedAt: new Date().toLocaleString(), rows 
         };
+    }
 
-        window.transposeAllChords = function (amt) {
-            document.querySelectorAll('.chord-input').forEach(input => {
-                if (!input.value || input.value === "-") return;
-                input.value = input.value.split('/').map(part => {
-                    const m = part.match(/^[A-G](#|b)?/);
-                    if (!m) return part;
-                    const idx = notes.indexOf(normalize(m[0]));
-                    return notes[(idx + amt + 12) % 12] + part.substring(m[0].length);
-                }).join('/');
-            });
-        };
-
-        let scroller = null;
-        window.toggleScroll = function () {
-            if (scroller) { clearInterval(scroller); scroller = null; document.getElementById('playBtn').innerText = "PLAY"; }
-            else {
-                const speed = (parseInt(document.getElementById('bpm').value) / 60);
-                scroller = setInterval(() => window.scrollBy(0, 1), 100 / speed);
-                document.getElementById('playBtn').innerText = "STOP";
+    window.toggleMode = function() {
+        if (!currentSongId) return alert("Please PUBLISH first.");
+        if (document.body.classList.contains('mode-edit')) {
+            document.body.className = "mode-view"; document.getElementById('modeBtn').innerText = "EDIT MODE";
+        } else {
+            const inputPass = prompt("Enter password:");
+            if (inputPass === null) return;
+            if (String(inputPass).trim() === String(currentPassword).trim()) {
+                document.body.className = "mode-edit"; document.getElementById('modeBtn').innerText = "VIEW MODE";
+            } else {
+                alert("Wrong password.");
             }
+        }
+    };
+
+    function getBeatsOptions(selected) {
+        let opts = "";
+        for(let i=1; i<=16; i++) {
+            opts += `<option value="${i}" ${i==selected?'selected':''}>${i}</option>`;
+        }
+        return opts;
+    }
+
+    window.addRow = function(b = null, data = null) {
+        const beats = b || document.getElementById('default-beats').value;
+        const row = document.createElement('div'); 
+        row.className = 'sheet-row';
+        const renderCells = (num, existingData) => {
+            let html = "";
+            for(let i=0; i<num; i++) {
+                const cVal = (existingData && existingData[i]) ? existingData[i].c : '';
+                const lVal = (existingData && existingData[i]) ? existingData[i].l : '';
+                html += `<div class="cell"><input class="chord-input" value="${cVal}" placeholder="-" onfocus="this.select()"><input class="lyric-input" value="${lVal}" placeholder="lyric" onfocus="this.select()"></div>`;
+            }
+            return html;
         };
+        row.innerHTML = `<div class="row-controls edit-only"><select class="row-beats-select" onchange="window.updateRowBeats(this)">${getBeatsOptions(beats)}</select><button class="btn-delete" onclick="this.parentElement.parentElement.remove()">DEL</button></div><div class="chord-grid grid-${beats}">${renderCells(beats, data)}</div>`;
+        document.getElementById('sheet').appendChild(row);
+    };
 
-        function updateUI(t) { document.getElementById('meta-line').innerText = `ID: ${currentSongId || '---'} | Ver: ${currentVersion} | Updated: ${t || '---'}`; }
+    window.updateRowBeats = function(selectEl) {
+        const newBeats = selectEl.value;
+        const gridDiv = selectEl.parentElement.nextElementSibling;
+        const currentCells = Array.from(gridDiv.querySelectorAll('.cell')).map(c => ({
+            c: c.querySelector('.chord-input').value, l: c.querySelector('.lyric-input').value
+        }));
+        gridDiv.className = `chord-grid grid-${newBeats}`;
+        let newHtml = "";
+        for(let i=0; i<newBeats; i++) {
+            const cVal = currentCells[i] ? currentCells[i].c : '';
+            const lVal = currentCells[i] ? currentCells[i].l : '';
+            newHtml += `<div class="cell"><input class="chord-input" value="${cVal}" placeholder="-" onfocus="this.select()"><input class="lyric-input" value="${lVal}" placeholder="lyric" onfocus="this.select()"></div>`;
+        }
+        gridDiv.innerHTML = newHtml;
+    };
 
-        // Custom Tab Logic: Global Chords -> Global Lyrics
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Tab') {
-                const active = document.activeElement;
-                if (active && (active.classList.contains('chord-input') || active.classList.contains('lyric-input'))) {
-                    e.preventDefault();
-                    const allChords = Array.from(document.querySelectorAll('.chord-input'));
-                    const allLyrics = Array.from(document.querySelectorAll('.lyric-input'));
-                    const flow = allChords.concat(allLyrics);
-                    const idx = flow.indexOf(active);
-                    if (idx > -1) {
-                        const nextIdx = idx + (e.shiftKey ? -1 : 1);
-                        if (nextIdx >= 0 && nextIdx < flow.length) {
-                            flow[nextIdx].focus();
-                        } else if (nextIdx >= flow.length) {
-                            const addBtn = document.querySelector('.btn-add');
-                            if (addBtn) addBtn.focus();
-                        }
+    document.getElementById('capo').addEventListener('input', (e) => {
+        const newCapo = parseInt(e.target.value) || 0;
+        window.transposeAllChords(lastCapo - newCapo);
+        lastCapo = newCapo;
+    });
+
+    window.transposeByKeyBtn = function(amt) {
+        const el = document.getElementById('current-key');
+        let idx = notes.indexOf(normalize(el.value));
+        let newKey = notes[(idx + amt + 12) % 12];
+        el.value = newKey;
+        window.transposeAllChords(amt);
+    };
+
+    window.transposeAllChords = function(amt) {
+        document.querySelectorAll('.chord-input').forEach(input => {
+            if (!input.value || input.value === "-") return;
+            input.value = input.value.split('/').map(part => {
+                const m = part.match(/^[A-G](#|b)?/);
+                if (!m) return part;
+                const idx = notes.indexOf(normalize(m[0]));
+                return notes[(idx + amt + 12) % 12] + part.substring(m[0].length);
+            }).join('/');
+        });
+    };
+
+    let scroller = null;
+    window.toggleScroll = function() {
+        if (scroller) {
+            clearInterval(scroller); scroller = null;
+            document.getElementById('playBtn').innerText = "PLAY";
+        } else {
+            const bpm = parseInt(document.getElementById('bpm').value) || 120;
+            const bpc = parseFloat(document.getElementById('beats-per-cell').value) || 1;
+            const totalCells = document.querySelectorAll('.cell').length;
+            const totalBeats = totalCells * bpc;
+            const totalTimeSeconds = (totalBeats / bpm) * 60;
+
+            const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+            if (scrollHeight <= 0) return;
+
+            const pixelsPerSecond = scrollHeight / totalTimeSeconds;
+            const intervalMs = 20; 
+            const step = pixelsPerSecond * (intervalMs / 1000);
+
+            let currentScroll = window.scrollY;
+            scroller = setInterval(() => {
+                currentScroll += step;
+                window.scrollTo(0, currentScroll);
+                if (currentScroll >= scrollHeight) {
+                    clearInterval(scroller); scroller = null;
+                    document.getElementById('playBtn').innerText = "PLAY";
+                }
+            }, intervalMs);
+            document.getElementById('playBtn').innerText = "STOP";
+        }
+    };
+
+    function updateUI(t) { document.getElementById('meta-line').innerText = `ID: ${currentSongId || '---'} | Ver: ${currentVersion} | Updated: ${t || '---'}`; }
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab') {
+            const active = document.activeElement;
+            if (active && (active.classList.contains('chord-input') || active.classList.contains('lyric-input'))) {
+                e.preventDefault();
+                const allChords = Array.from(document.querySelectorAll('.chord-input'));
+                const allLyrics = Array.from(document.querySelectorAll('.lyric-input'));
+                const flow = allChords.concat(allLyrics);
+                const idx = flow.indexOf(active);
+                if (idx > -1) {
+                    const nextIdx = idx + (e.shiftKey ? -1 : 1);
+                    if (nextIdx >= 0 && nextIdx < flow.length) {
+                        flow[nextIdx].focus();
+                    } else if (nextIdx >= flow.length) {
+                        const addBtn = document.querySelector('.btn-add');
+                        if (addBtn) addBtn.focus();
                     }
                 }
             }
-        });
+        }
+    });
 
-        window.addRow();
-    </script>
+    window.addRow();
+</script>
 </body>
-
 </html>
