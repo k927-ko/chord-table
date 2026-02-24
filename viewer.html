@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chord Table - Viewer</title>
+    <style>
+        :root {
+            --c-bg: #F2F2F2;
+            --c-white: #FFFFFF;
+            --c-black: #000000;
+            --c-dark: #3F3F3F;
+            --c-orange-txt: #AA3300;
+            --c-accent: #FFCB03;
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding-top: 150px;
+            background: white;
+            color: var(--c-dark);
+            font-size: 12px;
+        }
+
+        .header-fixed {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: white;
+            border-bottom: 2px solid var(--c-dark);
+            padding: 10px;
+            z-index: 1000;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 0 10px;
+        }
+
+        .search-bar {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        #search-results {
+            position: absolute;
+            background: white;
+            border: 1px solid var(--c-dark);
+            width: 300px;
+            display: none;
+            z-index: 2000;
+        }
+
+        .title-display {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--c-black);
+        }
+
+        .artist-display {
+            font-size: 24px;
+            color: var(--c-dark);
+        }
+
+        .chord-display {
+            font-size: 32px;
+            font-weight: bold;
+            color: var(--c-orange-txt);
+            text-align: center;
+        }
+
+        .lyric-display {
+            font-size: 16px;
+            border-top: 1px solid var(--c-dark);
+            padding-top: 2px;
+        }
+
+        .sheet-row {
+            display: flex;
+            border-bottom: 1px solid var(--c-dark);
+            padding: 8px 0;
+        }
+
+        .chord-grid {
+            display: grid;
+            flex-grow: 1;
+            gap: 4px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: var(--c-dark);
+        }
+
+        /* ヘッダー内のコンテンツを隠す設定 */
+        .header-fixed.collapsed .header-content {
+            display: none;
+        }
+
+        /* 切り替えボタンのスタイル */
+        .toggle-btn {
+            position: absolute;
+            right: 30px;
+            bottom: 5px;
+            background: var(--c-white);
+            border: 1px solid var(--c-dark);
+            cursor: pointer;
+            padding: 2px 6px;
+            font-size: 12px;
+        }
+
+        /* 折りたたまれた時のボタン位置調整 */
+        .header-fixed.collapsed .toggle-btn {
+            bottom: -22px;
+            border-top: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header-fixed" id="main-header">
+        <button class="toggle-btn" id="toggle-btn" onclick="window.toggleHeader()">▲</button>
+
+        <div class="header-inner header-content">
+            <div class="container">
+                <div class="search-bar">
+                    SEARCH <input type="text" id="search-input" oninput="window.smartSearch()">
+                    <div id="search-results"></div>
+                </div>
+                <div id="title" class="title-display">---</div>
+                <div id="artist" class="artist-display">---</div>
+                <div style="margin-top:5px;">
+                    KEY <input type="text" id="current-key" value="C" readonly style="width:30px; border:none;">
+                    CAPO <input type="number" id="capo" value="0" style="width:35px;">
+                    BPM <input type="number" id="bpm" value="120" style="width:40px;">
+                    <button onclick="window.toggleScroll()" style="background:var(--c-accent); font-weight:bold;">▶
+                        PLAY</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container" id="sheet"></div>
+    <div class="footer">©Sonic Music Addictions Engineering Department</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // ヘッダーの高さ自動検知ロジック (余白を自動調整)
+        const header = document.getElementById('main-header');
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                // コンテンツ（sheet）の上の余白をヘッダーの高さに合わせる
+                document.body.style.paddingTop = (entry.contentRect.height + 15) + 'px';
+            }
+        });
+        resizeObserver.observe(header);
+
+        // 折りたたみ切り替え関数
+        window.toggleHeader = function () {
+            header.classList.toggle('collapsed');
+            const btn = document.getElementById('toggle-btn');
+            btn.innerText = header.classList.contains('collapsed') ? '▼' : '▲';
+        };
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyCiAyc-L0wxGBQ5Sd8JoKdY2OBPTAwsD7s",
+            authDomain: "chord-table.firebaseapp.com",
+            projectId: "chord-table",
+            storageBucket: "chord-table.firebasestorage.app",
+            messagingSenderId: "728251607996",
+            appId: "1:728251607996:web:dc29c35d702f82410c19b9",
+            measurementId: "G-3FHPM24B7S"
+        }; const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.smartSearch = async function () {
+            const q = document.getElementById('search-input').value.toLowerCase();
+            const resDiv = document.getElementById('search-results');
+            if (q.length < 1) { resDiv.style.display = "none"; return; }
+            const snap = await getDocs(collection(db, "songs"));
+            let html = "";
+            snap.forEach(s => {
+                const d = s.data();
+                if (s.id.includes(q) || d.title.toLowerCase().includes(q) || d.artist.toLowerCase().includes(q)) {
+                    html += `<div style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;" onclick="window.load('${s.id}')">${d.title}</div>`;
+                }
+            });
+            resDiv.innerHTML = html; resDiv.style.display = "block";
+        };
+
+        window.load = async function (id) {
+            const snap = await getDoc(doc(db, "songs", id));
+            if (snap.exists()) {
+                const d = snap.data();
+                document.getElementById('title').innerText = d.title;
+                document.getElementById('artist').innerText = d.artist;
+                const sheet = document.getElementById('sheet');
+                sheet.innerHTML = "";
+                d.rows.forEach(r => {
+                    const row = document.createElement('div'); row.className = 'sheet-row';
+                    let cells = "";
+                    r.cels.forEach(c => {
+                        cells += `<div class="cell"><div class="chord-display">${c.c || '-'}</div><div class="lyric-display">${c.l || ''}</div></div>`;
+                    });
+                    row.innerHTML = `<div class="chord-grid" style="grid-template-columns: repeat(${r.b}, 1fr)">${cells}</div>`;
+                    sheet.appendChild(row);
+                });
+            }
+            document.getElementById('search-results').style.display = "none";
+        };
+    </script>
+</body>
+
+</html>
