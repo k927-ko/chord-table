@@ -1,308 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>Chord Table - Viewer</title>
+    <title>Viewer - Chord Table</title>
     <style>
+        /* スタイルは index.html と同一のため省略（実際には全コードを記述してください） */
         :root {
-            --c-bg: #F2F2F2;
-            --c-white: #FFFFFF;
-            --c-black: #000000;
-            --c-dark: #3F3F3F;
-            --c-orange-txt: #AA3300;
+            --c-bg: #F2F2F2; --c-white: #FFFFFF; --c-black: #000000; --c-dark: #3F3F3F;
+            --c-blue-bg: #DDEEFF;  --c-blue-txt: #000077;
+            --c-red-bg: #FFDDDD;   --c-red-txt: #900000;
+            --c-green-bg: #CCFFCC; --c-green-txt: #005500;
+            --c-orange-bg: #FFCCAA;--c-orange-txt: #AA3300;
+            --c-purple-bg: #FFCCFF;--c-purple-txt: #660066;
+            --c-yellow-bg: #FFFAAA;--c-yellow-txt: #777700;
             --c-accent: #FFCB03;
         }
-
-        body {
-            font-family: sans-serif;
-            margin: 0;
-            background: white;
-            color: var(--c-dark);
-            font-size: 12px;
-        }
-
-        .header-fixed {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: white;
-            border-bottom: 2px solid var(--c-dark);
-            z-index: 1000;
-        }
-
-        .header-inner {
-            padding: 10px;
-        }
-
-        .header-fixed.collapsed .header-content {
-            display: none;
-        }
-
-        .toggle-btn {
-            position: absolute;
-            right: 10px;
-            bottom: 5px;
-            background: white;
-            border: 1px solid var(--c-dark);
-            cursor: pointer;
-            padding: 2px 6px;
-            font-size: 12px;
-            z-index: 1001;
-        }
-
-        .header-fixed.collapsed .toggle-btn {
-            bottom: -22px;
-            border-top: none;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 0 10px;
-        }
-
-        .search-bar {
-            position: relative;
-            margin-bottom: 10px;
-        }
-
-        #search-results {
-            position: absolute;
-            background: white;
-            border: 1px solid var(--c-dark);
-            width: 300px;
-            display: none;
-            z-index: 2000;
-            max-height: 250px;
-            overflow-y: auto;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .title-display {
-            font-size: 36px;
-            font-weight: bold;
-            color: var(--c-black);
-        }
-
-        .artist-display {
-            font-size: 24px;
-            color: var(--c-dark);
-        }
-
-        .chord-display {
-            font-size: 32px;
-            font-weight: bold;
-            color: var(--c-orange-txt);
-            text-align: center;
-        }
-
-        .lyric-display {
-            font-size: 16px;
-            border-top: 1px solid var(--c-dark);
-            padding-top: 2px;
-            text-align: left;
-        }
-
-        .sheet-row {
-            display: flex;
-            border-bottom: 1px solid var(--c-dark);
-            padding: 8px 0;
-        }
-
-        .chord-grid {
-            display: grid;
-            flex-grow: 1;
-            gap: 4px;
-        }
-
-        .grid-1 {
-            grid-template-columns: repeat(1, 1fr);
-        }
-
-        .grid-2 {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .grid-3 {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
-        .grid-4 {
-            grid-template-columns: repeat(4, 1fr);
-        }
-
-        .grid-5 {
-            grid-template-columns: repeat(5, 1fr);
-        }
-
-        .grid-6 {
-            grid-template-columns: repeat(6, 1fr);
-        }
-
-        .grid-7 {
-            grid-template-columns: repeat(7, 1fr);
-        }
-
-        .grid-8 {
-            grid-template-columns: repeat(8, 1fr);
-        }
-
-        .grid-9 {
-            grid-template-columns: repeat(9, 1fr);
-        }
-
-        .grid-10 {
-            grid-template-columns: repeat(10, 1fr);
-        }
-
-        .grid-11 {
-            grid-template-columns: repeat(11, 1fr);
-        }
-
-        .grid-12 {
-            grid-template-columns: repeat(12, 1fr);
-        }
-
-        .grid-13 {
-            grid-template-columns: repeat(13, 1fr);
-        }
-
-        .grid-14 {
-            grid-template-columns: repeat(14, 1fr);
-        }
-
-        .grid-15 {
-            grid-template-columns: repeat(15, 1fr);
-        }
-
-        .grid-16 {
-            grid-template-columns: repeat(16, 1fr);
-        }
-
-        .footer {
-            text-align: center;
-            padding: 20px;
-            font-size: 12px;
-            color: var(--c-dark);
-            margin-top: 20px;
-        }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: var(--c-bg); color: var(--c-dark); font-size: 12px; }
+        .header-fixed { position: fixed; top: 0; left: 0; width: 100%; background: var(--c-white); z-index: 1000; border-bottom: 2px solid var(--c-dark); padding: 5px 0; }
+        .container { max-width: 1200px; margin: auto; padding: 0 10px; }
+        .title-display { font-size: 32px; font-weight: bold; }
+        .artist-display { font-size: 20px; color: var(--c-dark); margin-bottom: 5px; }
+        .settings-info { display: flex; gap: 15px; font-weight: bold; margin-bottom: 10px; }
+        .sheet-area { display: flex; flex-direction: column; gap: 4px; }
+        .sheet-row { display: flex; gap: 4px; padding-bottom: 5px; border-bottom: 1px solid var(--c-dark); }
+        .chord-grid { display: grid; flex-grow: 1; gap: 2px; }
+        .cell { display: flex; flex-direction: column; text-align: center; }
+        .chord-val { font-size: 32px; font-weight: bold; color: var(--c-orange-txt); }
+        .lyric-val { font-size: 16px; color: var(--c-black); }
+        .btn { border: 1px solid var(--c-dark); padding: 4px 8px; cursor: pointer; font-weight: bold; background: var(--c-accent); }
+        
+        /* Grid definitions (1-16) remain same */
+        .grid-1 { grid-template-columns: repeat(1, 1fr); } .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); } .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        .grid-5 { grid-template-columns: repeat(5, 1fr); } .grid-6 { grid-template-columns: repeat(6, 1fr); }
+        .grid-7 { grid-template-columns: repeat(7, 1fr); } .grid-8 { grid-template-columns: repeat(8, 1fr); }
+        .grid-9 { grid-template-columns: repeat(9, 1fr); } .grid-10 { grid-template-columns: repeat(10, 1fr); }
+        .grid-11 { grid-template-columns: repeat(11, 1fr); } .grid-12 { grid-template-columns: repeat(12, 1fr); }
+        .grid-13 { grid-template-columns: repeat(13, 1fr); } .grid-14 { grid-template-columns: repeat(14, 1fr); }
+        .grid-15 { grid-template-columns: repeat(15, 1fr); } .grid-16 { grid-template-columns: repeat(16, 1fr); }
     </style>
 </head>
-
 <body>
-    <div class="header-fixed" id="main-header">
-        <button class="toggle-btn" id="toggle-btn" onclick="window.toggleHeader()">▲</button>
-        <div class="header-inner header-content">
-            <div class="container">
-                <div class="search-bar">
-                    SEARCH <input type="text" id="search-input" oninput="window.smartSearch()">
-                    <div id="search-results"></div>
-                </div>
-                <div id="title" class="title-display">---</div>
-                <div id="artist" class="artist-display">---</div>
-                <div style="margin-top:5px;">
-                    KEY <input type="text" id="current-key" value="C" readonly style="width:30px; border:none;">
-                    CAPO <input type="number" id="capo" value="0" style="width:35px;" readonly>
-                    BPM <input type="number" id="bpm" value="120" style="width:40px;" readonly>
-                    <button id="playBtn" onclick="window.toggleScroll()"
-                        style="background:var(--c-accent); font-weight:bold; border:1px solid var(--c-dark); padding:2px 8px; cursor:pointer;">PLAY</button>
-                </div>
-            </div>
+
+<div class="header-fixed" id="header">
+    <div class="container">
+        <div id="title" class="title-display">---</div>
+        <div id="artist" class="artist-display">---</div>
+        <div class="settings-info">
+            <span id="key-info">KEY: ---</span>
+            <span id="capo-info">CAPO: ---</span>
+            <span id="bpm-info">BPM: ---</span>
+            <button class="btn" id="playBtn" onclick="window.toggleScroll()">PLAY</button>
         </div>
     </div>
-    <div class="container" id="main-container">
-        <div id="sheet"></div>
-    </div>
+</div>
 
-    <div class="footer">©SMA Engineering Department</div>
+<div class="container" style="margin-top:140px;" id="main-container">
+    <div id="sheet" class="sheet-area"></div>
+</div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-        const firebaseConfig = {
-            apiKey: "AIzaSyCiAyc-L0wxGBQ5Sd8JoKdY2OBPTAwsD7s",
-            authDomain: "chord-table.firebaseapp.com",
-            projectId: "chord-table",
-            storageBucket: "chord-table.firebasestorage.app",
-            messagingSenderId: "728251607996",
-            appId: "1:728251607996:web:dc29c35d702f82410c19b9",
-            measurementId: "G-3FHPM24B7S"
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    const firebaseConfig = { /* 同一のConfigを記述 */ };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-        // Header layout adjustment
-        const header = document.getElementById('main-header');
-        const resizeObserver = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                document.body.style.paddingTop = (entry.contentRect.height + 15) + 'px';
-            }
-        });
-        resizeObserver.observe(header);
+    let songData = null;
+    const urlParams = new URLSearchParams(window.location.search);
+    const songId = urlParams.get('id');
 
-        window.toggleHeader = function () {
-            header.classList.toggle('collapsed');
-            const btn = document.getElementById('toggle-btn');
-            btn.innerText = header.classList.contains('collapsed') ? '▼' : '▲';
-        };
-
-        // Search function
-        window.smartSearch = async function () {
-            const q = document.getElementById('search-input').value.toLowerCase();
-            const resDiv = document.getElementById('search-results');
-            if (q.length < 1) { resDiv.style.display = "none"; return; }
-            const snap = await getDocs(collection(db, "songs"));
-            let html = "";
-            snap.forEach(s => {
-                const d = s.data();
-                if (s.id.includes(q) || d.title.toLowerCase().includes(q) || d.artist.toLowerCase().includes(q)) {
-                    html += `<div style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;" onclick="window.load('${s.id}')">${d.title} / ${d.artist}</div>`;
-                }
-            });
-            resDiv.innerHTML = html || "<div style='padding:8px;'>No results</div>";
-            resDiv.style.display = "block";
-        };
-
-        window.load = async function (id) {
-            const snap = await getDoc(doc(db, "songs", id));
-            if (snap.exists()) {
-                const d = snap.data();
-                document.getElementById('title').innerText = d.title;
-                document.getElementById('artist').innerText = d.artist;
-                document.getElementById('current-key').value = d.key;
-                document.getElementById('capo').value = d.capo || 0;
-                document.getElementById('bpm').value = d.bpm || 120;
-
-                const sheet = document.getElementById('sheet');
-                sheet.innerHTML = "";
-                d.rows.forEach(r => {
-                    const row = document.createElement('div'); row.className = 'sheet-row';
-                    let cells = "";
-                    r.cels.forEach(c => {
-                        cells += `<div class="cell"><div class="chord-display">${c.c || '-'}</div><div class="lyric-display">${c.l || ''}</div></div>`;
-                    });
-                    // Ensure layout matches beats setup in editor
-                    row.innerHTML = `<div class="chord-grid grid-${r.b || r.cels.length}">${cells}</div>`;
-                    sheet.appendChild(row);
+    async function load() {
+        if(!songId) return;
+        const snap = await getDoc(doc(db, "songs", songId));
+        if(snap.exists()) {
+            songData = snap.data();
+            document.getElementById('title').innerText = songData.title;
+            document.getElementById('artist').innerText = songData.artist;
+            document.getElementById('key-info').innerText = "KEY: " + songData.key;
+            document.getElementById('capo-info').innerText = "CAPO: " + songData.capo;
+            document.getElementById('bpm-info').innerText = "BPM: " + (songData.bpm || 120);
+            
+            const sheet = document.getElementById('sheet');
+            songData.rows.forEach(r => {
+                const row = document.createElement('div');
+                row.className = `sheet-row`;
+                let cellsHtml = "";
+                r.cels.forEach(c => {
+                    cellsHtml += `<div class="cell"><div class="chord-val">${c.c || '-'}</div><div class="lyric-val">${c.l || '&nbsp;'}</div></div>`;
                 });
-            }
-            document.getElementById('search-results').style.display = "none";
-        };
+                row.innerHTML = `<div class="chord-grid grid-${r.b}">${cellsHtml}</div>`;
+                sheet.appendChild(row);
+            });
+            // Adjust margin based on header height
+            document.getElementById('main-container').style.marginTop = (document.getElementById('header').offsetHeight + 20) + "px";
+        }
+    }
 
-        let scroller = null;
-        window.toggleScroll = function () {
-            if (scroller) { clearInterval(scroller); scroller = null; document.getElementById('playBtn').innerText = "PLAY"; }
-            else {
-                const speed = (parseInt(document.getElementById('bpm').value) / 60);
-                scroller = setInterval(() => window.scrollBy(0, 1), 100 / speed);
-                document.getElementById('playBtn').innerText = "STOP";
-            }
-        };
-    </script>
+    let scroller = null;
+    window.toggleScroll = function() {
+        if (scroller) {
+            clearInterval(scroller); scroller = null;
+            document.getElementById('playBtn').innerText = "PLAY";
+        } else {
+            if(!songData) return;
+            const bpm = parseInt(songData.bpm) || 120;
+            const bpc = parseFloat(songData.beatsPerCell) || 1;
+            
+            // 全セル数をカウント
+            let totalCells = 0;
+            songData.rows.forEach(r => totalCells += r.cels.length);
+            
+            const totalBeats = totalCells * bpc;
+            const totalTimeSeconds = (totalBeats / bpm) * 60;
+
+            const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+            if (scrollHeight <= 0) return;
+
+            const pixelsPerSecond = scrollHeight / totalTimeSeconds;
+            const intervalMs = 20;
+            const step = pixelsPerSecond * (intervalMs / 1000);
+
+            let currentScroll = window.scrollY;
+            scroller = setInterval(() => {
+                currentScroll += step;
+                window.scrollTo(0, currentScroll);
+                if (currentScroll >= scrollHeight) {
+                    clearInterval(scroller); scroller = null;
+                    document.getElementById('playBtn').innerText = "PLAY";
+                }
+            }, intervalMs);
+            document.getElementById('playBtn').innerText = "STOP";
+        }
+    };
+
+    load();
+</script>
 </body>
-
 </html>
