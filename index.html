@@ -114,7 +114,7 @@
             width: 100%;
             border: none;
             outline: none;
-            color: var(--c-black);
+            color: var(--black);
             background: transparent;
         }
 
@@ -141,11 +141,11 @@
             font-weight: bold;
         }
 
-        .setting-item input {
+        .setting-item input,
+        .setting-item select {
             border: 1px solid var(--c-dark);
             padding: 2px;
             font-size: 12px;
-            width: 35px;
         }
 
         .btn {
@@ -207,9 +207,16 @@
         .row-controls {
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 4px;
             border-right: 1px dashed var(--c-dark);
             padding-right: 4px;
+            align-items: center;
+        }
+
+        .row-beats-select {
+            font-size: 10px;
+            width: 35px;
+            border: 1px solid var(--c-dark);
         }
 
         .btn-delete {
@@ -218,12 +225,17 @@
             border: 1px solid var(--c-dark);
             cursor: pointer;
             font-size: 10px;
+            padding: 2px 4px;
         }
 
         .chord-grid {
             display: grid;
             flex-grow: 1;
             gap: 2px;
+        }
+
+        .grid-1 {
+            grid-template-columns: repeat(1, 1fr);
         }
 
         .grid-2 {
@@ -238,20 +250,64 @@
             grid-template-columns: repeat(4, 1fr);
         }
 
+        .grid-5 {
+            grid-template-columns: repeat(5, 1fr);
+        }
+
+        .grid-6 {
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        .grid-7 {
+            grid-template-columns: repeat(7, 1fr);
+        }
+
         .grid-8 {
             grid-template-columns: repeat(8, 1fr);
+        }
+
+        .grid-9 {
+            grid-template-columns: repeat(9, 1fr);
+        }
+
+        .grid-10 {
+            grid-template-columns: repeat(10, 1fr);
+        }
+
+        .grid-11 {
+            grid-template-columns: repeat(11, 1fr);
+        }
+
+        .grid-12 {
+            grid-template-columns: repeat(12, 1fr);
+        }
+
+        .grid-13 {
+            grid-template-columns: repeat(13, 1fr);
+        }
+
+        .grid-14 {
+            grid-template-columns: repeat(14, 1fr);
+        }
+
+        .grid-15 {
+            grid-template-columns: repeat(15, 1fr);
+        }
+
+        .grid-16 {
+            grid-template-columns: repeat(16, 1fr);
         }
 
         .cell {
             border: 1px solid var(--c-dark);
             padding: 2px;
-            background: var(--c-yellow-bg);
+            background: #F2F2F2;
             display: flex;
             flex-direction: column;
         }
 
         .cell:focus-within {
-            background: var(--c-white);
+            background: #FFFAAA;
             border: 2px solid var(--c-orange-txt);
             padding: 1px;
         }
@@ -306,17 +362,38 @@
                 <input type="text" id="title" class="title-input" placeholder="SONG TITLE">
                 <input type="text" id="artist" class="artist-input" placeholder="ARTIST NAME">
                 <div class="settings-grid">
-                    <div class="setting-item">KEY <input type="text" id="current-key" value="C"></div>
-                    <div class="setting-item">CAPO <input type="number" id="capo" value="0"></div>
+                    <div class="setting-item">KEY <input type="text" id="current-key" value="C" style="width:30px;">
+                    </div>
+                    <div class="setting-item">CAPO <input type="number" id="capo" value="0" style="width:35px;"></div>
                     <div class="edit-only">
                         <button class="btn" onclick="window.transposeByKeyBtn(-1)">KEY -1</button>
                         <button class="btn" onclick="window.transposeByKeyBtn(1)">KEY +1</button>
                     </div>
-                    <div class="setting-item">BPM <input type="number" id="bpm" value="120"></div>
+                    <div class="setting-item">BPM <input type="number" id="bpm" value="120" style="width:45px;"></div>
+                    <div class="setting-item edit-only">DEFAULT BEATS
+                        <select id="default-beats" style="width:45px;">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4" selected>4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                            <option value="9">9</option>
+                            <option value="10">10</option>
+                            <option value="11">11</option>
+                            <option value="12">12</option>
+                            <option value="13">13</option>
+                            <option value="14">14</option>
+                            <option value="15">15</option>
+                            <option value="16">16</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="controls">
-                    <button class="btn btn-publish edit-only" onclick="window.publishToFirebase()">🚀 PUBLISH</button>
-                    <button class="btn btn-play" id="playBtn" onclick="window.toggleScroll()">▶ PLAY</button>
+                    <button class="btn btn-publish edit-only" onclick="window.publishToFirebase()">PUBLISH</button>
+                    <button class="btn btn-play" id="playBtn" onclick="window.toggleScroll()">PLAY</button>
                     <button class="btn btn-mode" id="modeBtn" onclick="window.toggleMode()">VIEW MODE</button>
                 </div>
             </div>
@@ -330,6 +407,7 @@
         </div>
     </div>
 
+    <div class="footer">©SMA Engineering Department</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -352,7 +430,6 @@
         const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
         const normalize = (n) => n.toUpperCase().replace('DB', 'C#').replace('EB', 'D#').replace('GB', 'F#').replace('AB', 'G#').replace('BB', 'A#');
 
-        // Auto Spacing for Header
         const header = document.getElementById('main-header');
         const resizeObserver = new ResizeObserver(entries => {
             for (let entry of entries) {
@@ -361,9 +438,7 @@
         });
         resizeObserver.observe(header);
 
-        window.toggleHeader = function () {
-            header.classList.toggle('collapsed');
-        };
+        window.toggleHeader = function () { header.classList.toggle('collapsed'); };
 
         window.smartSearch = async function () {
             const query = document.getElementById('search-input').value.toLowerCase();
@@ -391,6 +466,7 @@
                 document.getElementById('artist').value = d.artist;
                 document.getElementById('current-key').value = d.key;
                 document.getElementById('capo').value = d.capo;
+                document.getElementById('bpm').value = d.bpm || 120;
                 currentSongId = id; currentPassword = d.password; currentVersion = d.version;
                 d.rows.forEach(r => window.addRow(r.b, r.cels));
                 updateUI(d.updatedAt);
@@ -422,7 +498,9 @@
                 });
                 alert("Published! ID: " + currentSongId);
             } else {
-                if (prompt("Enter password:") !== currentPassword) return alert("Wrong password.");
+                const inputPass = prompt("Enter password:");
+                if (inputPass === null) return;
+                if (String(inputPass).trim() !== String(currentPassword).trim()) return alert("Wrong password.");
                 currentVersion++;
                 await updateDoc(doc(db, "songs", currentSongId), captureData(currentPassword, currentVersion));
                 alert("Updated!");
@@ -433,12 +511,20 @@
         function captureData(p, v) {
             const rows = [];
             document.querySelectorAll('.sheet-row').forEach(r => {
+                const bValue = parseInt(r.querySelector('.row-beats-select').value);
                 const cels = Array.from(r.querySelectorAll('.cell')).map(c => ({
                     c: c.querySelector('.chord-input').value, l: c.querySelector('.lyric-input').value
                 }));
-                rows.push({ b: cels.length, cels });
+                rows.push({ b: bValue, cels });
             });
-            return { title: document.getElementById('title').value, artist: document.getElementById('artist').value, key: document.getElementById('current-key').value, capo: document.getElementById('capo').value, password: p, version: v, updatedAt: new Date().toLocaleString(), rows };
+            return {
+                title: document.getElementById('title').value,
+                artist: document.getElementById('artist').value,
+                key: document.getElementById('current-key').value,
+                capo: document.getElementById('capo').value,
+                bpm: document.getElementById('bpm').value,
+                password: p, version: v, updatedAt: new Date().toLocaleString(), rows
+            };
         }
 
         window.toggleMode = function () {
@@ -446,20 +532,55 @@
             if (document.body.classList.contains('mode-edit')) {
                 document.body.className = "mode-view"; document.getElementById('modeBtn').innerText = "EDIT MODE";
             } else {
-                if (prompt("Enter password:") === currentPassword) {
+                const inputPass = prompt("Enter password:");
+                if (inputPass === null) return;
+                if (String(inputPass).trim() === String(currentPassword).trim()) {
                     document.body.className = "mode-edit"; document.getElementById('modeBtn').innerText = "VIEW MODE";
+                } else {
+                    alert("Wrong password.");
                 }
             }
         };
 
-        window.addRow = function (b = 4, data = null) {
-            const row = document.createElement('div'); row.className = 'sheet-row';
-            let cellsHtml = "";
-            for (let i = 0; i < b; i++) {
-                cellsHtml += `<div class="cell"><input class="chord-input" value="${data ? data[i].c : ''}" placeholder="-"><input class="lyric-input" value="${data ? data[i].l : ''}" placeholder="lyric"></div>`;
+        function getBeatsOptions(selected) {
+            let opts = "";
+            for (let i = 1; i <= 16; i++) {
+                opts += `<option value="${i}" ${i == selected ? 'selected' : ''}>${i}</option>`;
             }
-            row.innerHTML = `<div class="row-controls edit-only"><button class="btn-delete" onclick="this.parentElement.parentElement.remove()">DEL</button></div><div class="chord-grid grid-${b}">${cellsHtml}</div>`;
+            return opts;
+        }
+
+        window.addRow = function (b = null, data = null) {
+            const beats = b || document.getElementById('default-beats').value;
+            const row = document.createElement('div');
+            row.className = 'sheet-row';
+            const renderCells = (num, existingData) => {
+                let html = "";
+                for (let i = 0; i < num; i++) {
+                    const cVal = (existingData && existingData[i]) ? existingData[i].c : '';
+                    const lVal = (existingData && existingData[i]) ? existingData[i].l : '';
+                    html += `<div class="cell"><input class="chord-input" value="${cVal}" placeholder="-" onfocus="this.select()"><input class="lyric-input" value="${lVal}" placeholder="lyric" onfocus="this.select()"></div>`;
+                }
+                return html;
+            };
+            row.innerHTML = `<div class="row-controls edit-only"><select class="row-beats-select" onchange="window.updateRowBeats(this)">${getBeatsOptions(beats)}</select><button class="btn-delete" onclick="this.parentElement.parentElement.remove()">DEL</button></div><div class="chord-grid grid-${beats}">${renderCells(beats, data)}</div>`;
             document.getElementById('sheet').appendChild(row);
+        };
+
+        window.updateRowBeats = function (selectEl) {
+            const newBeats = selectEl.value;
+            const gridDiv = selectEl.parentElement.nextElementSibling;
+            const currentCells = Array.from(gridDiv.querySelectorAll('.cell')).map(c => ({
+                c: c.querySelector('.chord-input').value, l: c.querySelector('.lyric-input').value
+            }));
+            gridDiv.className = `chord-grid grid-${newBeats}`;
+            let newHtml = "";
+            for (let i = 0; i < newBeats; i++) {
+                const cVal = currentCells[i] ? currentCells[i].c : '';
+                const lVal = currentCells[i] ? currentCells[i].l : '';
+                newHtml += `<div class="cell"><input class="chord-input" value="${cVal}" placeholder="-" onfocus="this.select()"><input class="lyric-input" value="${lVal}" placeholder="lyric" onfocus="this.select()"></div>`;
+            }
+            gridDiv.innerHTML = newHtml;
         };
 
         document.getElementById('capo').addEventListener('input', (e) => {
@@ -490,15 +611,39 @@
 
         let scroller = null;
         window.toggleScroll = function () {
-            if (scroller) { clearInterval(scroller); scroller = null; document.getElementById('playBtn').innerText = "▶ PLAY"; }
+            if (scroller) { clearInterval(scroller); scroller = null; document.getElementById('playBtn').innerText = "PLAY"; }
             else {
                 const speed = (parseInt(document.getElementById('bpm').value) / 60);
                 scroller = setInterval(() => window.scrollBy(0, 1), 100 / speed);
-                document.getElementById('playBtn').innerText = "⏸ STOP";
+                document.getElementById('playBtn').innerText = "STOP";
             }
         };
 
         function updateUI(t) { document.getElementById('meta-line').innerText = `ID: ${currentSongId || '---'} | Ver: ${currentVersion} | Updated: ${t || '---'}`; }
+
+        // Custom Tab Logic: Global Chords -> Global Lyrics
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Tab') {
+                const active = document.activeElement;
+                if (active && (active.classList.contains('chord-input') || active.classList.contains('lyric-input'))) {
+                    e.preventDefault();
+                    const allChords = Array.from(document.querySelectorAll('.chord-input'));
+                    const allLyrics = Array.from(document.querySelectorAll('.lyric-input'));
+                    const flow = allChords.concat(allLyrics);
+                    const idx = flow.indexOf(active);
+                    if (idx > -1) {
+                        const nextIdx = idx + (e.shiftKey ? -1 : 1);
+                        if (nextIdx >= 0 && nextIdx < flow.length) {
+                            flow[nextIdx].focus();
+                        } else if (nextIdx >= flow.length) {
+                            const addBtn = document.querySelector('.btn-add');
+                            if (addBtn) addBtn.focus();
+                        }
+                    }
+                }
+            }
+        });
+
         window.addRow();
     </script>
 </body>
