@@ -17,7 +17,6 @@
         body {
             font-family: sans-serif;
             margin: 0;
-            padding-top: 150px;
             background: white;
             color: var(--c-dark);
             font-size: 12px;
@@ -26,11 +25,36 @@
         .header-fixed {
             position: fixed;
             top: 0;
+            left: 0;
             width: 100%;
             background: white;
             border-bottom: 2px solid var(--c-dark);
-            padding: 10px;
             z-index: 1000;
+        }
+
+        .header-inner {
+            padding: 10px;
+        }
+
+        .header-fixed.collapsed .header-content {
+            display: none;
+        }
+
+        .toggle-btn {
+            position: absolute;
+            right: 10px;
+            bottom: 5px;
+            background: white;
+            border: 1px solid var(--c-dark);
+            cursor: pointer;
+            padding: 2px 6px;
+            font-size: 12px;
+            z-index: 1001;
+        }
+
+        .header-fixed.collapsed .toggle-btn {
+            bottom: -22px;
+            border-top: none;
         }
 
         .container {
@@ -51,6 +75,9 @@
             width: 300px;
             display: none;
             z-index: 2000;
+            max-height: 250px;
+            overflow-y: auto;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
         .title-display {
@@ -75,6 +102,7 @@
             font-size: 16px;
             border-top: 1px solid var(--c-dark);
             padding-top: 2px;
+            text-align: left;
         }
 
         .sheet-row {
@@ -89,34 +117,76 @@
             gap: 4px;
         }
 
+        .grid-1 {
+            grid-template-columns: repeat(1, 1fr);
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .grid-5 {
+            grid-template-columns: repeat(5, 1fr);
+        }
+
+        .grid-6 {
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        .grid-7 {
+            grid-template-columns: repeat(7, 1fr);
+        }
+
+        .grid-8 {
+            grid-template-columns: repeat(8, 1fr);
+        }
+
+        .grid-9 {
+            grid-template-columns: repeat(9, 1fr);
+        }
+
+        .grid-10 {
+            grid-template-columns: repeat(10, 1fr);
+        }
+
+        .grid-11 {
+            grid-template-columns: repeat(11, 1fr);
+        }
+
+        .grid-12 {
+            grid-template-columns: repeat(12, 1fr);
+        }
+
+        .grid-13 {
+            grid-template-columns: repeat(13, 1fr);
+        }
+
+        .grid-14 {
+            grid-template-columns: repeat(14, 1fr);
+        }
+
+        .grid-15 {
+            grid-template-columns: repeat(15, 1fr);
+        }
+
+        .grid-16 {
+            grid-template-columns: repeat(16, 1fr);
+        }
+
         .footer {
             text-align: center;
             padding: 20px;
             font-size: 12px;
             color: var(--c-dark);
-        }
-
-        /* ヘッダー内のコンテンツを隠す設定 */
-        .header-fixed.collapsed .header-content {
-            display: none;
-        }
-
-        /* 切り替えボタンのスタイル */
-        .toggle-btn {
-            position: absolute;
-            right: 30px;
-            bottom: 5px;
-            background: var(--c-white);
-            border: 1px solid var(--c-dark);
-            cursor: pointer;
-            padding: 2px 6px;
-            font-size: 12px;
-        }
-
-        /* 折りたたまれた時のボタン位置調整 */
-        .header-fixed.collapsed .toggle-btn {
-            bottom: -22px;
-            border-top: none;
+            margin-top: 20px;
         }
     </style>
 </head>
@@ -124,7 +194,6 @@
 <body>
     <div class="header-fixed" id="main-header">
         <button class="toggle-btn" id="toggle-btn" onclick="window.toggleHeader()">▲</button>
-
         <div class="header-inner header-content">
             <div class="container">
                 <div class="search-bar">
@@ -135,36 +204,24 @@
                 <div id="artist" class="artist-display">---</div>
                 <div style="margin-top:5px;">
                     KEY <input type="text" id="current-key" value="C" readonly style="width:30px; border:none;">
-                    CAPO <input type="number" id="capo" value="0" style="width:35px;">
-                    BPM <input type="number" id="bpm" value="120" style="width:40px;">
-                    <button onclick="window.toggleScroll()" style="background:var(--c-accent); font-weight:bold;">▶
-                        PLAY</button>
+                    CAPO <input type="number" id="capo" value="0" style="width:35px;" readonly>
+                    BPM <input type="number" id="bpm" value="120" style="width:40px;" readonly>
+                    <button id="playBtn" onclick="window.toggleScroll()"
+                        style="background:var(--c-accent); font-weight:bold; border:1px solid var(--c-dark); padding:2px 8px; cursor:pointer;">PLAY</button>
                 </div>
             </div>
         </div>
     </div>
-    <div class="container" id="sheet"></div>
-    <div class="footer">©Sonic Music Addictions Engineering Department</div>
+    <div class="container" id="main-container">
+        <div id="sheet"></div>
+    </div>
+
+    <div class="footer">©SMA Engineering Department</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        // ヘッダーの高さ自動検知ロジック (余白を自動調整)
-        const header = document.getElementById('main-header');
-        const resizeObserver = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                // コンテンツ（sheet）の上の余白をヘッダーの高さに合わせる
-                document.body.style.paddingTop = (entry.contentRect.height + 15) + 'px';
-            }
-        });
-        resizeObserver.observe(header);
 
-        // 折りたたみ切り替え関数
-        window.toggleHeader = function () {
-            header.classList.toggle('collapsed');
-            const btn = document.getElementById('toggle-btn');
-            btn.innerText = header.classList.contains('collapsed') ? '▼' : '▲';
-        };
         // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         const firebaseConfig = {
             apiKey: "AIzaSyCiAyc-L0wxGBQ5Sd8JoKdY2OBPTAwsD7s",
@@ -174,9 +231,26 @@
             messagingSenderId: "728251607996",
             appId: "1:728251607996:web:dc29c35d702f82410c19b9",
             measurementId: "G-3FHPM24B7S"
-        }; const app = initializeApp(firebaseConfig);
+        };
+        const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Header layout adjustment
+        const header = document.getElementById('main-header');
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                document.body.style.paddingTop = (entry.contentRect.height + 15) + 'px';
+            }
+        });
+        resizeObserver.observe(header);
+
+        window.toggleHeader = function () {
+            header.classList.toggle('collapsed');
+            const btn = document.getElementById('toggle-btn');
+            btn.innerText = header.classList.contains('collapsed') ? '▼' : '▲';
+        };
+
+        // Search function
         window.smartSearch = async function () {
             const q = document.getElementById('search-input').value.toLowerCase();
             const resDiv = document.getElementById('search-results');
@@ -186,10 +260,11 @@
             snap.forEach(s => {
                 const d = s.data();
                 if (s.id.includes(q) || d.title.toLowerCase().includes(q) || d.artist.toLowerCase().includes(q)) {
-                    html += `<div style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;" onclick="window.load('${s.id}')">${d.title}</div>`;
+                    html += `<div style="padding:8px; border-bottom:1px solid #eee; cursor:pointer;" onclick="window.load('${s.id}')">${d.title} / ${d.artist}</div>`;
                 }
             });
-            resDiv.innerHTML = html; resDiv.style.display = "block";
+            resDiv.innerHTML = html || "<div style='padding:8px;'>No results</div>";
+            resDiv.style.display = "block";
         };
 
         window.load = async function (id) {
@@ -198,6 +273,10 @@
                 const d = snap.data();
                 document.getElementById('title').innerText = d.title;
                 document.getElementById('artist').innerText = d.artist;
+                document.getElementById('current-key').value = d.key;
+                document.getElementById('capo').value = d.capo || 0;
+                document.getElementById('bpm').value = d.bpm || 120;
+
                 const sheet = document.getElementById('sheet');
                 sheet.innerHTML = "";
                 d.rows.forEach(r => {
@@ -206,11 +285,22 @@
                     r.cels.forEach(c => {
                         cells += `<div class="cell"><div class="chord-display">${c.c || '-'}</div><div class="lyric-display">${c.l || ''}</div></div>`;
                     });
-                    row.innerHTML = `<div class="chord-grid" style="grid-template-columns: repeat(${r.b}, 1fr)">${cells}</div>`;
+                    // Ensure layout matches beats setup in editor
+                    row.innerHTML = `<div class="chord-grid grid-${r.b || r.cels.length}">${cells}</div>`;
                     sheet.appendChild(row);
                 });
             }
             document.getElementById('search-results').style.display = "none";
+        };
+
+        let scroller = null;
+        window.toggleScroll = function () {
+            if (scroller) { clearInterval(scroller); scroller = null; document.getElementById('playBtn').innerText = "PLAY"; }
+            else {
+                const speed = (parseInt(document.getElementById('bpm').value) / 60);
+                scroller = setInterval(() => window.scrollBy(0, 1), 100 / speed);
+                document.getElementById('playBtn').innerText = "STOP";
+            }
         };
     </script>
 </body>
