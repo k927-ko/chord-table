@@ -344,6 +344,38 @@
             font-size: 12px;
             color: var(--c-dark);
         }
+
+        /* --- ここから：ドラッグ機能のデザイン --- */
+        .drag-handle {
+            cursor: grab;
+            padding: 0 6px;
+            color: #aaa;
+            font-size: 18px;
+            font-weight: bold;
+            user-select: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        /* ドラッグ中の行を半透明にする */
+        .sheet-row.dragging {
+            opacity: 0.4;
+        }
+
+        /* ドロップ先の目安（青い線） */
+        .drop-target-above {
+            box-shadow: 0 -3px 0 0 #007bff !important;
+        }
+
+        .drop-target-below {
+            box-shadow: 0 3px 0 0 #007bff !important;
+        }
+
+        /* --- ここまで --- */
     </style>
 </head>
 
@@ -405,11 +437,13 @@
     <div class="container" id="main-container">
         <div id="sheet" class="sheet-area"></div>
         <div class="edit-only" style="margin-top:10px;">
-            <button class="btn btn-add" style="width:100%;" onclick="window.addRow();">+ ADD NEW LINE</button>
+            <button class="btn btn-add" style="width:100%;" onmousedown="event.preventDefault()" onclick="window.addRow();">+ ADD NEW LINE</button>
         </div>
     </div>
 
-    <div class="footer">©SMA Engineering Department</div>
+    <div class="footer">
+        ©SMA Engineering Department<br>Access restricted to members of Sonic Music Addictions
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -482,6 +516,50 @@
                 document.getElementById('modeBtn').innerText = "EDIT MODE";
             }
         };
+        window.duplicateRow = function (btn) {
+            // 1. コピー元の行（row）を特定
+            const sourceRow = btn.parentElement.parentElement;
+
+            // 2. コピー元のデータを読み取る（セル数とBPM）
+            const beats = parseInt(sourceRow.querySelector('.row-beats-select').value);
+            const bpmValue = sourceRow.querySelector('.row-bpm-input').value;
+
+            // コピー元のセル（コードと歌詞）の入力データを配列にまとめる
+            const cellsData = Array.from(sourceRow.querySelectorAll('.cell')).map(c => ({
+                c: c.querySelector('.chord-input').value,
+                l: c.querySelector('.lyric-input').value
+            }));
+
+            // 3. 新しい行（DOM要素）を作成
+            const newRow = document.createElement('div');
+            newRow.className = 'sheet-row';
+
+            // セルを描画する関数（addRowの中にあるものと同じ）
+            const renderCells = (num, existingData) => {
+                let html = "";
+                for (let i = 0; i < num; i++) {
+                    const cVal = (existingData && existingData[i]) ? existingData[i].c : '';
+                    const lVal = (existingData && existingData[i]) ? existingData[i].l : '';
+                    html += `<div class="cell"><input class="chord-input" value="${cVal}" placeholder="-" onfocus="this.select()"><input class="lyric-input" value="${lVal}" placeholder="lyric" onfocus="this.select()"></div>`;
+                }
+                return html;
+            };
+
+            // 4. 新しい行のHTMLを組み立てる（取得したBPMやコードのデータを入れる）
+            newRow.innerHTML = `<div class="row-controls edit-only"><div class="drag-handle" title="ドラッグで移動">
+                <svg viewBox="0 0 10 16" xmlns="http://www.w3.org/2000/svg" style="width: 12px; height: 18px; vertical-align: middle;">
+                    <circle cx="2.5" cy="3" r="1.5" fill="#aaa"></circle>
+                    <circle cx="7.5" cy="3" r="1.5" fill="#aaa"></circle>
+                    <circle cx="2.5" cy="8" r="1.5" fill="#aaa"></circle>
+                    <circle cx="7.5" cy="8" r="1.5" fill="#aaa"></circle>
+                    <circle cx="2.5" cy="13" r="1.5" fill="#aaa"></circle>
+                    <circle cx="7.5" cy="13" r="1.5" fill="#aaa"></circle>
+                </svg>
+                </div><select class="row-beats-select" onchange="window.updateRowBeats(this)">${getBeatsOptions(beats)}</select><input type="number" class="row-bpm-input" value="${bpmValue}" title="この行のBPM" style="width: 45px; margin: 0 4px; text-align: center;"><button class="btn-copy" onclick="window.duplicateRow(this)" style="margin-right: 4px;">COPY</button><button class="btn-delete" onclick="this.parentElement.parentElement.remove()">DEL</button></div><div class="chord-grid grid-${beats}">${renderCells(beats, cellsData)}</div>`;
+
+            // 5. コピー元の行の「すぐ下」に挿入！
+            sourceRow.after(newRow);
+        };
 
         window.publishToFirebase = async function () {
             if (!currentSongId) {
@@ -523,7 +601,11 @@
                 const cels = Array.from(r.querySelectorAll('.cell')).map(c => ({
                     c: c.querySelector('.chord-input').value, l: c.querySelector('.lyric-input').value
                 }));
-                rows.push({ b: bValue, cels });
+                // 行ごとのBPMを取得（なければ全体設定のBPMをバックアップに使用）
+                const rowBpmInput = r.querySelector('.row-bpm-input');
+                const rbValue = rowBpmInput ? parseInt(rowBpmInput.value) : (parseInt(document.getElementById('bpm').value) || 120);
+
+                rows.push({ b: bValue, rb: rbValue, cels }); // rb という名前で保存            
             });
             return {
                 title: document.getElementById('title').value,
@@ -572,8 +654,28 @@
                 }
                 return html;
             };
-            row.innerHTML = `<div class="row-controls edit-only"><select class="row-beats-select" onchange="window.updateRowBeats(this)">${getBeatsOptions(beats)}</select><button class="btn-delete" onclick="this.parentElement.parentElement.remove()">DEL</button></div><div class="chord-grid grid-${beats}">${renderCells(beats, data)}</div>`;
-            document.getElementById('sheet').appendChild(row);
+            const currentGlobalBpm = document.getElementById('bpm').value || 120;
+            row.innerHTML = `<div class="row-controls edit-only"><div class="drag-handle" title="ドラッグで移動">
+                <svg viewBox="0 0 10 16" xmlns="http://www.w3.org/2000/svg" style="width: 12px; height: 18px; vertical-align: middle;">
+                    <circle cx="2.5" cy="3" r="1.5" fill="#aaa"></circle>
+                    <circle cx="7.5" cy="3" r="1.5" fill="#aaa"></circle>
+                    <circle cx="2.5" cy="8" r="1.5" fill="#aaa"></circle>
+                    <circle cx="7.5" cy="8" r="1.5" fill="#aaa"></circle>
+                    <circle cx="2.5" cy="13" r="1.5" fill="#aaa"></circle>
+                    <circle cx="7.5" cy="13" r="1.5" fill="#aaa"></circle>
+                </svg>
+                </div><select class="row-beats-select" onchange="window.updateRowBeats(this)">${getBeatsOptions(beats)}</select><input type="number" class="row-bpm-input" value="${currentGlobalBpm}" title="この行のBPM" style="width: 45px; margin: 0 4px; text-align: center;"><button class="btn-copy" onclick="window.duplicateRow(this)" style="margin-right: 4px;">COPY</button><button class="btn-delete" onclick="this.parentElement.parentElement.remove()">DEL</button></div><div class="chord-grid grid-${beats}">${renderCells(beats, data)}</div>`;
+                // 現在どこかの入力欄（セル）にカーソルがあるか確認
+            const activeEl = document.activeElement;
+            const currentRow = activeEl ? activeEl.closest('.sheet-row') : null;
+
+            if (currentRow && document.getElementById('sheet').contains(currentRow)) {
+                // 選択中の行があれば、そのすぐ下に挿入
+                currentRow.after(row);
+            } else {
+                // 何も選択していなければ、今まで通り一番下に追加
+                document.getElementById('sheet').appendChild(row);
+            }
         };
 
         window.updateRowBeats = function (selectEl) {
@@ -652,13 +754,19 @@
                         clearInterval(scroller);
 
                         // 時間計算スクロール
-                        const bpm = parseInt(document.getElementById('bpm').value) || 120;
+                        // 行BPM→合計時間算出
                         const bpc = parseFloat(document.getElementById('beats-per-cell').value) || 1;
-                        const totalCells = document.querySelectorAll('.cell').length;
-                        const totalBeats = totalCells * bpc;
-                        const totalTimeSeconds = (totalBeats / bpm) * 60;
+                        const sheetRows = document.querySelectorAll('.sheet-row');
+                        let totalTimeSeconds = 0;
 
-                        // スクロール量を計算
+                        sheetRows.forEach(r => {
+                            const cellsInRow = r.querySelectorAll('.cell').length;
+                            const rowBpmInput = r.querySelector('.row-bpm-input');
+                            const rowBpm = rowBpmInput ? parseInt(rowBpmInput.value) : (parseInt(document.getElementById('bpm').value) || 120);
+
+                            totalTimeSeconds += ((cellsInRow * bpc) / rowBpm) * 60;
+                        });
+                        // スクロール量計算
                         const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
                         const pixelsPerSecond = scrollHeight / totalTimeSeconds;
                         const mainStep = pixelsPerSecond * (intervalMs / 1000);
@@ -714,7 +822,7 @@
         });
 
         window.addRow();
-        
+
         // キーボード操作
         document.addEventListener('keydown', function (e) {
             // 1. 押されたのがSpace
@@ -726,6 +834,87 @@
                 if (isViewMode && !isTyping) {
                     e.preventDefault(); // 勝手なスクロール防止
                     window.toggleScroll(); // 再生・停止を実行
+                }
+            }
+        });
+        // ドラッグ＆ドロップ機能
+        let draggedRow = null;
+        const sheetContainer = document.getElementById('sheet');
+
+        // ドラッグ時のみ行移動可能
+        sheetContainer.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.drag-handle')) {
+                e.target.closest('.sheet-row').setAttribute('draggable', 'true');
+            }
+        });
+        sheetContainer.addEventListener('mouseup', (e) => {
+            if (e.target.closest('.drag-handle')) {
+                e.target.closest('.sheet-row').removeAttribute('draggable');
+            }
+        });
+
+        // ドラッグ開始
+        sheetContainer.addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('sheet-row')) {
+                draggedRow = e.target;
+                setTimeout(() => e.target.classList.add('dragging'), 0);
+            }
+        });
+
+        // ドラッグ終了（線を消すなどのお掃除）
+        sheetContainer.addEventListener('dragend', (e) => {
+            if (e.target.classList.contains('sheet-row')) {
+                e.target.classList.remove('dragging');
+                e.target.removeAttribute('draggable');
+                draggedRow = null;
+                document.querySelectorAll('.drop-target-above, .drop-target-below').forEach(el => {
+                    el.classList.remove('drop-target-above', 'drop-target-below');
+                });
+            }
+        });
+
+        // ドラッグ中（マウスの位置を計算して、上か下かに青い線を引く）
+        sheetContainer.addEventListener('dragover', (e) => {
+            e.preventDefault(); // ドロップを許可するために必須のオマジナイ
+            const targetRow = e.target.closest('.sheet-row');
+
+            if (targetRow && targetRow !== draggedRow) {
+                const rect = targetRow.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2; // 行の真ん中の高さ
+
+                // 一旦すべての線を消す
+                document.querySelectorAll('.drop-target-above, .drop-target-below').forEach(el => {
+                    el.classList.remove('drop-target-above', 'drop-target-below');
+                });
+
+                // マウスが半分より上なら上に線、下なら下に線を引く
+                if (e.clientY < midY) {
+                    targetRow.classList.add('drop-target-above');
+                } else {
+                    targetRow.classList.add('drop-target-below');
+                }
+            }
+        });
+
+        // ドロップ（指を離したとき）に実際に要素を移動させる
+        sheetContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const targetRow = e.target.closest('.sheet-row');
+
+            if (targetRow && targetRow !== draggedRow) {
+                // 線を消す
+                document.querySelectorAll('.drop-target-above, .drop-target-below').forEach(el => {
+                    el.classList.remove('drop-target-above', 'drop-target-below');
+                });
+
+                const rect = targetRow.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+
+                // 青い線の位置に合わせて移動（before: 上に挿入, after: 下に挿入）
+                if (e.clientY < midY) {
+                    targetRow.before(draggedRow);
+                } else {
+                    targetRow.after(draggedRow);
                 }
             }
         });
