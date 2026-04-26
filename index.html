@@ -204,28 +204,77 @@
             background: transparent;
         }
 
+        /* 左操作パネル */
         .row-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            border-right: 1px dashed var(--c-dark);
-            padding-right: 4px;
+            display: grid;
+            grid-template-areas:
+                "drag  beat  bpm"
+                "drag  copy  del";
+            gap: 0px;
             align-items: center;
+            padding: 0 8px;
+        }
+
+        .drag-handle {
+            grid-area: drag;
         }
 
         .row-beats-select {
-            font-size: 10px;
-            width: 35px;
+            grid-area: beat;
+            margin: auto;
+            width: 50px;
+            height: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            background: var(--c-white);
             border: 1px solid var(--c-dark);
+            color: var(--c-dark);
+            margin: auto;
+            width: 50px;
+            height: 20px;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .row-bpm-input {
+            grid-area: bpm;
+            margin: auto;
+            width: 50px;
+            height: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            background: var(--c-white);
+            border: 1px solid var(--c-dark);
+            color: var(--c-dark);
+            margin: auto;
+            width: 50px;
+            height: 20px;
+            font-size: 11px;
+            text-align: center;
+        }
+
+        .btn-copy {
+            grid-area: copy;
+            margin: auto;
+            width: 50px;
+            height: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            background: var(--c-bg);
+            border: 1px solid var(--c-dark);
+            color: var(--c-dark);
         }
 
         .btn-delete {
-            background: var(--c-red-bg);
-            color: var(--c-red-txt);
-            border: 1px solid var(--c-dark);
+            grid-area: del;
+            margin: auto;
+            width: 50px;
+            height: 20px;
+            font-size: 11px;
             cursor: pointer;
-            font-size: 10px;
-            padding: 2px 4px;
+            background: var(--c-red-bg);
+            border: 1px solid var(--c-red-txt);
+            color: var(--c-red-txt);
         }
 
         .chord-grid {
@@ -437,7 +486,8 @@
     <div class="container" id="main-container">
         <div id="sheet" class="sheet-area"></div>
         <div class="edit-only" style="margin-top:10px;">
-            <button class="btn btn-add" style="width:100%;" onmousedown="event.preventDefault()" onclick="window.addRow();">+ ADD NEW LINE</button>
+            <button class="btn btn-add" style="width:100%;" onmousedown="event.preventDefault()"
+                onclick="window.addRow();">+ ADD NEW LINE</button>
         </div>
     </div>
 
@@ -665,7 +715,7 @@
                     <circle cx="7.5" cy="13" r="1.5" fill="#aaa"></circle>
                 </svg>
                 </div><select class="row-beats-select" onchange="window.updateRowBeats(this)">${getBeatsOptions(beats)}</select><input type="number" class="row-bpm-input" value="${currentGlobalBpm}" title="この行のBPM" style="width: 45px; margin: 0 4px; text-align: center;"><button class="btn-copy" onclick="window.duplicateRow(this)" style="margin-right: 4px;">COPY</button><button class="btn-delete" onclick="this.parentElement.parentElement.remove()">DEL</button></div><div class="chord-grid grid-${beats}">${renderCells(beats, data)}</div>`;
-                // 現在どこかの入力欄（セル）にカーソルがあるか確認
+            // 現在どこかの入力欄（セル）にカーソルがあるか確認
             const activeEl = document.activeElement;
             const currentRow = activeEl ? activeEl.closest('.sheet-row') : null;
 
